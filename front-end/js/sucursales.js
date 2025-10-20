@@ -1,10 +1,10 @@
 $(function () {
   let currentPage = 1;
   const pageSize = 10;
-  const tablaId = "tablaBarberos";
-  const paginationId = "paginationBarberos";
+  const tablaId = "tablaSucursales";
+  const paginationId = "paginationSucursales";
 
-  const modalEl = document.getElementById("modalBarbero");
+  const modalEl = document.getElementById("modalSucursal");
   const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
 
   function escapeHtml(str) {
@@ -13,12 +13,12 @@ $(function () {
     });
   }
 
-  async function cargarBarberos(page = 1) {
+  async function cargarSucursales(page = 1) {
     const tbody = document.getElementById(tablaId);
-    const placeholder = document.getElementById("placeholder-barbero");
+    const placeholder = document.getElementById("placeholder-sucursal");
     try {
-      const res = await fetch(`http://localhost:8080/api/barberos?page=${page - 1}&size=${pageSize}`);
-      if (!res.ok) throw new Error("Error al obtener barberos");
+      const res = await fetch(`http://localhost:8080/api/sucursales?page=${page - 1}&size=${pageSize}`);
+      if (!res.ok) throw new Error("Error al obtener sucursales");
       const data = await res.json();
       const items = data.content ?? data;
       const totalPages = data.totalPages ?? Math.ceil((data.length || items.length) / pageSize);
@@ -27,31 +27,30 @@ $(function () {
         if (placeholder) {
           tbody.innerHTML = "";
           tbody.appendChild(placeholder);
-          placeholder.innerHTML = `<td colspan="2" class="text-center text-muted">No hay barberos</td>`;
+          placeholder.innerHTML = `<td colspan="2" class="text-center text-muted">No hay sucursales</td>`;
         } else {
-          tbody.innerHTML = `<tr><td colspan="2" class="text-center text-muted">No hay barberos</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="2" class="text-center text-muted">No hay sucursales</td></tr>`;
         }
         renderPagination(totalPages, page);
         return;
       }
 
       tbody.innerHTML = "";
-      items.forEach(b => {
+      items.forEach(s => {
         const tr = document.createElement("tr");
-        // guardamos en dataset para editar sin GET
-        tr.dataset.id = b.id ?? "";
-        tr.dataset.nombre = b.nombre ?? "";
+        tr.dataset.id = s.id ?? "";
+        tr.dataset.direccion = s.direccion ?? "";
 
-        const tdNombre = document.createElement("td");
-        tdNombre.textContent = b.nombre ?? "";
+        const tdDireccion = document.createElement("td");
+        tdDireccion.textContent = s.direccion ?? "";
 
         const tdActions = document.createElement("td");
         tdActions.innerHTML = `
-          <button class="btn-action btn-edit-barbero btn-sm me-1" data-id="${b.id}" title="Editar"><i class="fa fa-pen"></i></button>
-          <button class="btn-action btn-delete-barbero btn-sm text-danger" data-id="${b.id}" title="Eliminar"><i class="fa fa-trash"></i></button>
+          <button class="btn-action btn-edit-sucursal btn-sm me-1" data-id="${s.id}" title="Editar"><i class="fa fa-pen"></i></button>
+          <button class="btn-action btn-delete-sucursal btn-sm text-danger" data-id="${s.id}" title="Eliminar"><i class="fa fa-trash"></i></button>
         `;
 
-        tr.appendChild(tdNombre);
+        tr.appendChild(tdDireccion);
         tr.appendChild(tdActions);
         tbody.appendChild(tr);
       });
@@ -59,7 +58,7 @@ $(function () {
       renderPagination(totalPages, page);
       attachRowListeners();
     } catch (err) {
-      console.error("Error cargando barberos:", err);
+      console.error("Error cargando sucursales:", err);
       if (placeholder) {
         const tbody = document.getElementById(tablaId);
         tbody.innerHTML = "";
@@ -78,7 +77,7 @@ $(function () {
     const prevLi = document.createElement("li");
     prevLi.className = `page-item ${activePage === 1 ? "disabled" : ""}`;
     prevLi.innerHTML = `<a class="page-link" href="#">«</a>`;
-    prevLi.addEventListener("click", (e) => { e.preventDefault(); if (activePage > 1) cargarBarberos(activePage - 1); });
+    prevLi.addEventListener("click", (e) => { e.preventDefault(); if (activePage > 1) cargarSucursales(activePage - 1); });
     pagination.appendChild(prevLi);
 
     const maxButtons = 7;
@@ -90,60 +89,58 @@ $(function () {
       const li = document.createElement("li");
       li.className = `page-item ${i === activePage ? "active" : ""}`;
       li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-      li.addEventListener("click", (ev) => { ev.preventDefault(); cargarBarberos(i); });
+      li.addEventListener("click", (ev) => { ev.preventDefault(); cargarSucursales(i); });
       pagination.appendChild(li);
     }
 
     const nextLi = document.createElement("li");
     nextLi.className = `page-item ${activePage === totalPages ? "disabled" : ""}`;
     nextLi.innerHTML = `<a class="page-link" href="#">»</a>`;
-    nextLi.addEventListener("click", (e) => { e.preventDefault(); if (activePage < totalPages) cargarBarberos(activePage + 1); });
+    nextLi.addEventListener("click", (e) => { e.preventDefault(); if (activePage < totalPages) cargarSucursales(activePage + 1); });
     pagination.appendChild(nextLi);
   }
 
   function attachRowListeners() {
     // Delete
-    document.querySelectorAll(".btn-delete-barbero").forEach(btn => {
+    document.querySelectorAll(".btn-delete-sucursal").forEach(btn => {
       btn.removeEventListener?.("click", undefined);
       btn.addEventListener("click", async (e) => {
         const id = e.currentTarget.getAttribute("data-id");
-        if (!confirm("Eliminar este barbero?")) return;
+        if (!confirm("Eliminar esta sucursal?")) return;
         try {
-          const res = await fetch(`http://localhost:8080/api/barberos/${id}`, { method: "DELETE" });
-          if (res.ok) cargarBarberos(currentPage);
+          const res = await fetch(`http://localhost:8080/api/sucursales/${id}`, { method: "DELETE" });
+          if (res.ok) cargarSucursales(currentPage);
           else alert("No se pudo eliminar");
         } catch (err) { console.error(err); alert("Error al eliminar"); }
       });
     });
 
-    // Edit (sin GET por id; usamos dataset)
-    document.querySelectorAll(".btn-edit-barbero").forEach(btn => {
+    // Edit
+    document.querySelectorAll(".btn-edit-sucursal").forEach(btn => {
       btn.removeEventListener?.("click", undefined);
       btn.addEventListener("click", (e) => {
         const id = e.currentTarget.getAttribute("data-id");
-        // buscamos la fila por dataset.id (CSS.escape por seguridad)
         const row = document.querySelector(`tr[data-id="${CSS.escape(id)}"]`);
-        const nombre = row ? row.dataset.nombre : "";
-        const inputId = document.getElementById("barberoId");
-        const inputNombre = document.getElementById("barberoNombre");
-        if (inputId) inputId.value = id ?? "";
-        if (inputNombre) inputNombre.value = nombre ?? "";
-        if (modalEl) modalEl.querySelector(".modal-title").textContent = "Editar barbero";
+        const direccion = row ? row.dataset.direccion : "";
+        document.getElementById("sucursalId").value = id ?? "";
+        document.getElementById("sucursalDireccion").value = direccion ?? "";
+        if (modalEl) modalEl.querySelector(".modal-title").textContent = "Editar sucursal";
         if (modal) modal.show();
       });
     });
   }
 
-  const form = document.getElementById("formBarbero");
+  const form = document.getElementById("formSucursal");
   if (form) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const id = document.getElementById("barberoId").value || null;
-      const nombre = document.getElementById("barberoNombre").value ?? "";
-      const payload = { nombre };
+      const id = document.getElementById("sucursalId").value || null;
+      const direccion = document.getElementById("sucursalDireccion").value ?? "";
+
+      const payload = { direccion };
 
       try {
-        const url = id ? `http://localhost:8080/api/barberos/${encodeURIComponent(id)}` : "http://localhost:8080/api/barberos";
+        const url = id ? `http://localhost:8080/api/sucursales/${encodeURIComponent(id)}` : `http://localhost:8080/api/sucursales`;
         const method = id ? "PUT" : "POST";
         const res = await fetch(url, {
           method,
@@ -153,31 +150,29 @@ $(function () {
         if (res.ok) {
           if (modal) modal.hide();
           form.reset();
-          const idEl = document.getElementById("barberoId");
-          if (idEl) idEl.value = "";
-          cargarBarberos(1);
+          document.getElementById("sucursalId").value = "";
+          cargarSucursales(1);
         } else {
           const text = await res.text();
-          console.error("Error guardando barbero:", text);
-          alert("No se pudo guardar el barbero");
+          console.error("Error guardando sucursal:", text);
+          alert("No se pudo guardar la sucursal");
         }
       } catch (err) {
         console.error(err);
-        alert("Error al guardar barbero");
+        alert("Error al guardar sucursal");
       }
     });
   }
 
-  const btnNuevo = document.getElementById("btnNuevoBarbero");
+  const btnNuevo = document.getElementById("btnNuevaSucursal");
   if (btnNuevo) {
     btnNuevo.addEventListener("click", () => {
-      if (form) form.reset();
-      const idEl = document.getElementById("barberoId");
-      if (idEl) idEl.value = "";
-      if (modalEl) modalEl.querySelector(".modal-title").textContent = "Nuevo barbero";
+      form.reset();
+      document.getElementById("sucursalId").value = "";
+      if (modalEl) modalEl.querySelector(".modal-title").textContent = "Nueva sucursal";
       if (modal) modal.show();
     });
   }
 
-  cargarBarberos(1);
+  cargarSucursales(1);
 });
